@@ -8,9 +8,26 @@
 
 <h1>Log Formatter</h1>
 
-<p>Paste your AM logs below</p>
+<p>Paste your logs below</p>
 
 <form action="/format" method="post">
+    <p>Filters</p>
+    <input type="checkbox" id="nonjson" name="nonjson" value="nonjson" checked>
+    <label for="nonjson">Include non json logs</label><br>
+    <input type="checkbox" id="audit" name="audit" value="audit" checked>
+    <label for="audit">Audit Events</label><br>
+    <input type="checkbox" id="log" name="log" value="log" checked>
+    <label for="log">Log Events</label>
+    <label for="level">Level</label>
+    <select name="level" id="level">
+        <option value="TRACE">TRACE</option>
+        <option value="DEBUG">DEBUG</option>
+        <option value="ERROR">ERROR</option>
+        <option value="INFO">INFO</option>
+        <option value="WARN">WARN</option>
+    </select>
+    <br>
+    <br>
     <textarea name="logdata" id="logdata" rows="30" cols="100"></textarea>
     <br>
     <input type="submit" value="Submit">

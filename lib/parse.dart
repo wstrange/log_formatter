@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 class Parser {
+  final HtmlEscape htmlEscape = const HtmlEscape();
   final _prefix = '''
 <html>
 <head>
@@ -25,10 +26,17 @@ pre.debug {
   ''';
 
   final _suffix = '''
+<br>
+<a href="javascript:history.back()">Go Back</a>
 </body>
 </html>
 ''';
-  String parse(String input) {
+  // parse the log data in input.
+  String parse(String input,
+      {bool incudeAuditEvents = true,
+      includeLogEvents = true,
+      String logLevel = 'TRACE',
+      bool includeNonJson = true}) {
     var buf = StringBuffer();
     var lines = input.split('\n');
     buf.write(_prefix);
@@ -36,11 +44,14 @@ pre.debug {
     for (var l in lines) {
       // assume line is json - use the json formatter
       if (l.startsWith('{')) {
-        _json(l, buf);
+        _json(
+            l, buf, incudeAuditEvents, includeLogEvents, _level2Int(logLevel));
       } else {
-        buf.write('<pre>');
-        buf.write(l);
-        buf.write('\n</pre>');
+        // non json
+        if (includeNonJson) {
+          var s = htmlEscape.convert(l);
+          buf.write('<pre>$s\n</pre>');
+        }
       }
     }
     buf.write(_suffix);
@@ -49,22 +60,46 @@ pre.debug {
 
   final _encoder = JsonEncoder.withIndent('  ');
 
+  final _levelToIntMap = {
+    'WARN': 0,
+    'INFO': 1,
+    'ERROR': 2,
+    'DEBUG': 3,
+    'TRACE': 4
+  };
+
+  int _level2Int(String level) =>
+      level == null ? 4 : _levelToIntMap[level] ?? 4;
+
   // Format the line l to the json buffer b
-  void _json(String l, StringBuffer b) {
-    var j = jsonDecode(l);
-    var level = j['level'] as String;
-    switch (level) {
-      case 'ERROR':
-        b.write('<pre class="error">');
-        break;
-      case 'WARN':
-        b.write('<pre class="warning">');
-        break;
-      case 'DEBUG':
-        b.write('<pre class="debug">');
-        break;
-      default:
-        b.write('<pre>');
+  void _json(String l, StringBuffer b, bool incudeAuditEvents, includeLogEvents,
+      int logLevel) {
+    var j;
+    try {
+      j = jsonDecode(l);
+    } catch (e) {
+      // if the json does not parse, output the string with a warning
+      var s = htmlEscape.convert(l);
+      b.write('<pre class="error">Malformed json: $s</pre>');
+      return;
+    }
+
+    // only audit events have a "source". Default to log if null
+    var source = j['source'] ?? 'log';
+
+    if ((source == 'audit' && !incudeAuditEvents) ||
+        (source == 'log' && !includeLogEvents)) {
+      return;
+    }
+
+    var level = _level2Int(j['level']);
+    // if we are ignoring this level, just return
+    if (level > logLevel) return;
+
+    if (level >= 2) {
+      b.write('<pre class="error">');
+    } else {
+      b.write('<pre>');
     }
 
     var s = _encoder.convert(j);

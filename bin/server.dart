@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:args/args.dart';
 import 'package:shelf/shelf.dart' as shelf;
@@ -7,8 +8,6 @@ import 'package:shelf/shelf_io.dart' as io;
 import 'package:shelf_static/shelf_static.dart';
 import 'package:shelf_router/shelf_router.dart';
 import 'package:log_formatter/parse.dart';
-
-
 
 // For Google Cloud Run, set _hostname to '0.0.0.0'.
 const _hostname = '0.0.0.0';
@@ -30,16 +29,27 @@ void main(List<String> args) async {
     return;
   }
 
-  var staticHandler =  createStaticHandler('public', defaultDocument: 'index.html');
+  var staticHandler =
+      createStaticHandler('public', defaultDocument: 'index.html');
   var app = Router();
 
   app.post('/format', (Request request) async {
     var body = await request.readAsString(); // get the body
-    var param = Uri(query: body).queryParameters; // parse as URI to extract form params
+    var param =
+        Uri(query: body).queryParameters; // parse as URI to extract form params
     var data = param['logdata'];
-    var out = logParser.parse(data);
+    var auditEvents = param['audit'] != null;
+    var logEvents = param['log'] != null;
+    var level = param['level'];
+    var nonJson = param['nonjson'] != null;
+    print('Audit =$auditEvents  log=$logEvents level=$level nonJosn=$nonJson');
+    var out = logParser.parse(data,
+        incudeAuditEvents: auditEvents,
+        includeLogEvents: logEvents,
+        logLevel: level,
+        includeNonJson: nonJson);
     //print('Got log out = $out');
-    return Response.ok( out,
+    return Response.ok(out,
         headers: {'content-type': 'text/html; charset=UTF-8'});
   });
 
@@ -50,5 +60,4 @@ void main(List<String> args) async {
 
   var server = await io.serve(pipe, _hostname, port);
   print('Serving at http://${server.address.host}:${server.port}');
-
 }
