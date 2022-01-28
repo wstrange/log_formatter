@@ -1,3 +1,7 @@
+{ "a": "json missing the level. Defaults to error"}
+
+{ bad json line}
+
 Copying bootstrap files for legacy AMKeyProvider
 Waiting for User Store to be available. Trying ds-idrepo-0.ds-idrepo:8080/alive endpoint
 User Store is responding

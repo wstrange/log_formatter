@@ -31,9 +31,9 @@ pre.debug {
 </body>
 </html>
 ''';
-  // parse the log data in input.
+  // parse the log data in input. Return the formatted html as output.
   String parse(String input,
-      {bool incudeAuditEvents = true,
+      {bool includeAuditEvents = true,
       includeLogEvents = true,
       String logLevel = 'TRACE',
       bool includeNonJson = true}) {
@@ -45,7 +45,7 @@ pre.debug {
       // assume line is json - use the json formatter
       if (l.startsWith('{')) {
         _json(
-            l, buf, incudeAuditEvents, includeLogEvents, _level2Int(logLevel));
+            l, buf, includeAuditEvents, includeLogEvents, _level2Int(logLevel));
       } else {
         // non json
         if (includeNonJson) {
@@ -72,22 +72,22 @@ pre.debug {
       level == null ? 4 : _levelToIntMap[level] ?? 4;
 
   // Format the line l to the json buffer b
-  void _json(String l, StringBuffer b, bool incudeAuditEvents, includeLogEvents,
+  void _json(String l, StringBuffer b, bool includeAuditEvents, includeLogEvents,
       int logLevel) {
-    var j;
+    dynamic j;
     try {
       j = jsonDecode(l);
     } catch (e) {
       // if the json does not parse, output the string with a warning
       var s = htmlEscape.convert(l);
-      b.write('<pre class="error">Malformed json: $s</pre>');
+      b.write('<pre class="error">Malformed json in log: $s<br/></pre>');
       return;
     }
 
     // only audit events have a "source". Default to log if null
     var source = j['source'] ?? 'log';
 
-    if ((source == 'audit' && !incudeAuditEvents) ||
+    if ((source == 'audit' && !includeAuditEvents) ||
         (source == 'log' && !includeLogEvents)) {
       return;
     }
