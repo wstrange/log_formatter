@@ -9,7 +9,7 @@ void main() async {
   test('parse log', () async {
     var f = File('test/test.txt').readAsStringSync();
     var out = p.parse(f);
-    var html = File('test/out.html').writeAsStringSync(out);
+    File('test/out.html').writeAsStringSync(out);
   });
 
   test('malformed json',(){

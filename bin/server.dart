@@ -1,8 +1,6 @@
 import 'dart:io';
-import 'dart:math';
 
 import 'package:args/args.dart';
-import 'package:shelf/shelf.dart' as shelf;
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart' as io;
 import 'package:shelf_static/shelf_static.dart';
@@ -25,7 +23,7 @@ void main(List<String> args) async {
   if (port == null) {
     stdout.writeln('Could not parse port value "$portStr" into a number.');
     // 64: command line usage error
-    exitCode = 64;
+    exitCode = 64; //processUtils setter
     return;
   }
 
@@ -44,7 +42,7 @@ void main(List<String> args) async {
     var nonJson = param['nonjson'] != null;
     print('Audit =$auditEvents  log=$logEvents level=$level nonJosn=$nonJson');
     var out = logParser.parse(data,
-        incudeAuditEvents: auditEvents,
+        includeAuditEvents: auditEvents,
         includeLogEvents: logEvents,
         logLevel: level,
         includeNonJson: nonJson);
@@ -53,7 +51,7 @@ void main(List<String> args) async {
         headers: {'content-type': 'text/html; charset=UTF-8'});
   });
 
-  var handler = Cascade().add(staticHandler).add(app.handler).handler;
+  var handler = Cascade().add(staticHandler).add(app).handler;
 
   // Pipelines compose middleware plus a single handler
   var pipe = const Pipeline().addMiddleware(logRequests()).addHandler(handler);
